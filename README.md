@@ -7,7 +7,7 @@ WEB-разработка интерактивного приложения пе�
   
   ```
 npm init
-npm 1 express cors childproccess
+npm i express cors childproccess
 npm start
 ```
 
