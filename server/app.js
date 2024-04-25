@@ -34,7 +34,9 @@ app.post('/', async (req, res) => {
         default:
             return res.status(400).send('Invalid language');
     }
-
+    if(code==""){
+        return res.send(`Empty code`);
+    }
     testName = `./tests/test_${language}_${date}.txt`;
     try {
         await writeFilePromise(testName, arguments);
@@ -44,6 +46,7 @@ app.post('/', async (req, res) => {
 
         if (language_r === "cpp") {
             const compileCommand = `g++ -o ${progName.slice(0,-4)} ${progName}`;
+            const { stdout: compileStdout, stderr: compileStderr } = await execPromise(compileCommand);
 
             try {
                 const { stdout: compileStdout, stderr: compileStderr } = await execPromise(compileCommand);
@@ -75,7 +78,7 @@ app.post('/', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        return res.send(`Error in user input`);
+        return res.send(`Error in user input ${error}`);
     }
 });
 
