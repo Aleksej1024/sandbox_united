@@ -61,7 +61,7 @@ app.post('/', async (req, res) => {
                 res.send(result); // Отправка результата выполнения в качестве ответа
             } catch (error) {
                 console.error(error);
-                return res.status(500).send(`Error running script ${error}`);
+                return res.send(`Error running script ${error}`);
             }
         } else {
             const runCommand = `(${language_e} ${progName}) < ${testName}`;
@@ -75,7 +75,7 @@ app.post('/', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        return res.status(500).send(`Error in user input`);
+        return res.send(`Error in user input`);
     }
 });
 
