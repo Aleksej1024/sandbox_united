@@ -105,7 +105,14 @@
             <td style = "padding: 10px 0; width:25%; height: 7%"><button style = "border-right: 1px solid white;" onclick = "run()">Запуск кода</button></td>
             <td style = "padding: 10px 0;width:25%; height: 7%"><button style = "border-right: 1px solid white;" onclick = "connect()">Подключение к песочнице</button></td>
         </tr>
-        <tr><td colspan = "3" style = "font-weight:bold; border-bottom: 1px solid white;  background: #373737; height: 3%; font-size: 18px; padding: 0px 10px 10px 10px;color: white" id = "filenameTd"><img src = "">Language: <select id = "lang" "class = "list"><option value = "cpp">C++</option><option value = "javascript">JavaScript</option></select></td></tr>
+        <tr>
+            <td colspan = "3" style = "font-weight:bold; border-bottom: 1px solid white;  background: #373737; height: 3%; font-size: 18px; padding: 0px 10px 10px 10px;color: white" id = "filenameTd">
+                <img src = "">Language: 
+                <select id = "lang" "class = "list">
+                    <option value = "cpp">C++</option>
+                    <option value = "javascript">JavaScript</option>
+                    <option value = "python">Python</option>
+                </select></td></tr>
         <tr>
             <td colspan = "3" style = "height: 60%">
                 <div id="box">
@@ -147,16 +154,17 @@
 
 			
             function run() {
-                $.ajax({
-	                url: 'http://127.0.0.1:3000/',
-	                method: 'post',
-	                dataType: 'html',
-	                data: {
+                var json_str = JSON.stringify({
                         language: $("#lang").val(),
                         code: editor.getValue(),
                         arguments: $("#input").val(),
                         date: (new Date()).toISOString().slice(0, 19),
-                    },
+                    });
+                $.ajax({
+	                url: 'http://127.0.0.1:3000/',
+	                method: 'post',
+	                contentType: 'application/json',
+	                data: json_str,
 	                success: function(data){
 		                out.value = data;
                     }
