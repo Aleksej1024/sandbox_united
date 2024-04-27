@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="shortcut icon" href="icon.png" type="image/png">
+		<title>Песочница UNITED</title>
+		<style type="text/css">
+            html, body {
+                margin:0;
+                padding: 0;
+                background: #272822;
+                font-family: monospace;
+                color: white;
+            }
+			#box {
+			    width: 100%;
+			    height: 100%;
+			}
+			#editor {
+			    width: 100%;
+		        height: 100%;
+                border-bottom: 1px solid white;
+			}
+
+			.ace_print-margin {
+			    display: none;
+			}
+            table{
+                border-collapse: collapse;
+                height:100%;
+                width:100%; 
+                position: absolute; 
+                top: 0; 
+                bottom: 0; 
+                left: 0; 
+                right: 0;
+            }
+            textarea {
+	            resize: none;
+	            width: 100%;
+                height:100%;
+                background: #272822;
+                border:none;
+                color: white;
+                
+            }
+            textarea:focus {
+                outline: none !important;
+                border:none;       
+            }
+            button {
+                width:100%;
+                height:100%;
+                color: white;
+                background-color: #272822;
+                border: none; 
+                border-bottom: 1px solid white;
+                border-top: 1px solid white;  
+            }
+            button:hover {
+                outline: none !important;
+                background-color: #674c47;
+                cursor: pointer;
+            }
+            a, a:visited {
+                text-decoration:none;
+                color: white;        
+            }
+
+            a:hover {
+                text-decoration:underline;
+                cursor: pointer;        
+            }
+			
+			.list {
+				background: none;
+				color: white;
+				border: none;
+				border-bottom: 1px solid white;
+				padding: 6px;
+                outline: none;
+			}
+
+			.list option {
+				background: #373737;
+
+			}
+
+            .table-td-panel {
+                font-weight:bold; 
+                border-bottom: 1px solid white;  
+                background: #373737; 
+                height: 3%; 
+                font-size: 18px; 
+                padding: 0px 10px 10px 10px;
+                color: white
+            }
+            
+            ::-webkit-scrollbar { width: 2px; height: 4px;}
+	
+	        ::-webkit-scrollbar-track {  background-color: #272822;}
+	
+	        ::-webkit-scrollbar-track-piece { background-color: #272822}
+	
+	        ::-webkit-scrollbar-thumb { height: 4px; background-color: #52524e; border-radius: 3px;}
+		</style>
+        <script src="src/ace.js"></script>
+		<script src="src/ace.js"></script>
+		<script src="src/jquery.min.js"></script>
+	</head>
+	<body>
+
+    <table>
+        <tr><td colspan = "3" style = "height: 3%; font-size: 20px; padding: 10px; text-align: center;color: white"><b>Песочница UNITED</b></td></tr>
+        <tr>
+            <td style = "padding: 10px 0;width:25%; height: 7%"><button style = "border-right: 1px solid white;" onclick = "save()">Сохранить код</button></td>
+            <td style = "padding: 10px 0; width:25%; height: 7%"><button style = "border-right: 1px solid white;" onclick = "run()">Запуск кода</button></td>
+            <td style = "padding: 10px 0;width:25%; height: 7%"><button style = "border-right: 1px solid white;" onclick = "connect()">Подключение к песочнице</button></td>
+        </tr>
+        <tr>
+            <td colspan = "3" class = "table-td-panel" id = "filenameTd">
+                Language: 
+                <select id = "lang" class = "list">
+                    <option value = "cpp">C++</option>
+                    <option value = "javascript">JavaScript</option>
+                    <option value = "python">Python</option>
+                </select>
+            </td>
+        </tr>        
+        <tr>
+            <td colspan = "3" style = "height: 60%">
+                <div id="box">
+		        <div id="editor"></div>
+            </td>   
+        </tr>
+        <tr>
+            <td colspan = "2" style = "width: 50%; height: 4%; padding: 10px 20px; font-size: 20px; background:#212121"><b>Вывод терминала:</b></td>
+            <td style = "width: 25%; height: 4%; padding: 10px 20px; font-size: 20px; background:#212121"><b>Поток ввода:</b></td>
+        </tr>
+        <tr>
+            <td colspan = "2" style = "width: 50%; padding: 20px;  ">
+                <textarea style = "border-right: 1px solid white;" readonly id = "output"></textarea>
+            </td>
+            <td style = "width: 25%; padding: 20px;  ">
+                <textarea style = "border-right: 1px solid white;" id = "input" placeholder = "Введите входные данные здесь"></textarea>
+            </td>
+            <tr><td colspan = "3" style = "border-top: 1px solid white; text-align:center; font-size: 16px">Алексей Пропастин и Александр Цветков @ 2024 год</td></tr>
+        </tr>
+    </table>
+    <script>
+            var ip = location.host.substring(0,location.host.length-5);
+            var socket = new WebSocket("ws://"+ip+":8081");
+            var current_filename = "main.cpp";
+            var fs = 0;
+			var editor = ace.edit('editor');
+			editor.setTheme('ace/theme/monokai');
+			editor.getSession().setMode('ace/mode/c_cpp');
+            editor.setOptions({ fontSize: "16pt"});			
+            
+            
+			editor.setValue(localStorage.getItem("user_code"),-1);
+            
+            var connection_status = 0;
+			var out = document.getElementById("output");
+			var input = document.getElementById("input");
+            var files = document.getElementById("filebrowser");
+            var ipVM = document.getElementById("ipVM");
+			
+            function run() {
+                var json_str = JSON.stringify({
+                        language: $("#lang").val(),
+                        code: editor.getValue(),
+                        arguments: $("#input").val(),
+                        date: (new Date()).toISOString().slice(0, 19),
+                    });
+                var vm = document.location.href.split(":");
+                $.ajax({
+	                url: vm[1] + ':3000',
+	                method: 'post',
+	                contentType: 'application/json',
+	                data: json_str,
+	                success: function(data){
+		                out.value = data;
+                    }
+                });
+            }    
+                 
+            function save() {
+                localStorage.setItem('user_code', editor.getValue());
+                out.value ="Код сохранён!";
+            }
+
+            function connect() {
+                save();
+                window.location.reload();
+            }  
+                    
+		</script>
+	</body>
+</html>
